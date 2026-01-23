@@ -17,4 +17,4 @@ Placeholder
 
 ## External hardware
 
-None
+None.
