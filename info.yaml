@@ -3,7 +3,7 @@ project:
   title:        "ASIC Onbaording Project - Henry Zhao"      # Project title
   author:       "Henry Zhao"      # Your name
   discord:      "moyaimoyai3197"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "SPI-controlled PWM peripheral with write only feature for Tiny Tapeout."      # One line description of what your project does
+  description:  "SPI-controlled PWM peripheral for Tiny Tapeout."      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     10000000       # Clock frequency in Hz (or 0 if not applicable)
 
