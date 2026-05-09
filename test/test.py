@@ -4,11 +4,10 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
-from cocotb.triggers import FallingEdge
 from cocotb.triggers import ClockCycles
 from cocotb.types import Logic
 from cocotb.types import LogicArray
-from cocotb.triggers import with_timeout
+
 
 async def await_half_sclk(dut):
     """Wait for the SCLK signal to go high or low."""
@@ -151,6 +150,30 @@ async def test_spi(dut):
 
     dut._log.info("SPI test completed successfully")
 
+#helper functions
+async def wait_for_rising_bit(dut, bit_mask, timeout_cycles=30000):
+    for _ in range(timeout_cycles):
+        await RisingEdge(dut.clk)
+        if not (int(dut.uo_out.value) & bit_mask):
+            break
+    for _ in range(timeout_cycles):
+        await RisingEdge(dut.clk)
+        if int(dut.uo_out.value) & bit_mask:
+            return
+    raise Exception("Timeout waiting for rising edge")
+
+async def wait_for_falling_bit(dut, bit_mask, timeout_cycles=30000):
+    for _ in range(timeout_cycles):
+        await RisingEdge(dut.clk)
+        if int(dut.uo_out.value) & bit_mask:
+            break
+    for _ in range(timeout_cycles):
+        await RisingEdge(dut.clk)
+        if not (int(dut.uo_out.value) & bit_mask):
+            return
+    raise Exception("Timeout waiting for falling edge")
+
+
 @cocotb.test()
 async def test_pwm_freq(dut):
     clock = Clock(dut.clk, 100, units="ns")
@@ -174,9 +197,9 @@ async def test_pwm_freq(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x80)
 
 
-    await with_timeout(RisingEdge(dut.uo_out), 3, timeout_unit="ms")
+    await wait_for_rising_bit(dut, 0x01)
     time_a = cocotb.utils.get_sim_time(units="s")
-    await with_timeout(RisingEdge(dut.uo_out), 3, timeout_unit="ms")
+    await wait_for_rising_bit(dut, 0x01)
     time_b = cocotb.utils.get_sim_time(units="s")
     period = time_b - time_a
     freq = 1/period
@@ -207,11 +230,11 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x02, 0xFF)
     await send_spi_transaction(dut, 1, 0x04, 0x80)
 
-    await with_timeout(RisingEdge(dut.uo_out), 3, timeout_unit="ms")
+    await wait_for_rising_bit(dut, 0x01)
     time_a = cocotb.utils.get_sim_time(units="s")
-    await with_timeout(FallingEdge(dut.uo_out), 3, timeout_unit="ms")
+    await wait_for_falling_bit(dut, 0x01)
     time_b = cocotb.utils.get_sim_time(units="s")
-    await with_timeout(RisingEdge(dut.uo_out), 3, timeout_unit="ms")
+    await wait_for_rising_bit(dut, 0x01)
     time_c = cocotb.utils.get_sim_time(units="s")
     period = time_c - time_a
     high_period = time_b - time_a
