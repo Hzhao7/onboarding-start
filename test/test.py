@@ -198,11 +198,11 @@ async def test_pwm_freq(dut):
 
 
     await wait_for_rising_bit(dut, 0x01)
-    time_a = cocotb.utils.get_sim_time(units="s")
+    time_a = cocotb.utils.get_sim_time(units="ns")
     await wait_for_rising_bit(dut, 0x01)
-    time_b = cocotb.utils.get_sim_time(units="s")
+    time_b = cocotb.utils.get_sim_time(units="ns")
     period = time_b - time_a
-    freq = 1/period
+    freq = 1000000000/period
     dut._log.info(f"Measured frequency: {freq} Hz")
     assert (freq >= 2970 and freq <= 3030), f"Expected frequency in range [2970, 3030] Hz, got {freq} Hz"
     dut._log.info("PWM Frequency test completed successfully")
@@ -231,11 +231,11 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x80)
 
     await wait_for_rising_bit(dut, 0x01)
-    time_a = cocotb.utils.get_sim_time(units="s")
+    time_a = cocotb.utils.get_sim_time(units="ns")
     await wait_for_falling_bit(dut, 0x01)
-    time_b = cocotb.utils.get_sim_time(units="s")
+    time_b = cocotb.utils.get_sim_time(units="ns")
     await wait_for_rising_bit(dut, 0x01)
-    time_c = cocotb.utils.get_sim_time(units="s")
+    time_c = cocotb.utils.get_sim_time(units="ns")
     period = time_c - time_a
     high_period = time_b - time_a
     duty_cycle = high_period / period
