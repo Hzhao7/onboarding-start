@@ -91,17 +91,14 @@ module spi_peripheral (
             pwm_duty_cycle <= 8'h00;
         end else if (transaction_ready && !transaction_processed) begin
             if (spi_wdata[15] == 1'b1) begin 
-                if (spi_wdata[14:8] == 7'h00) begin
-                    en_reg_out_7_0 <= spi_wdata[7:0];
-                end else if (spi_wdata[14:8] == 7'h01) begin
-                    en_reg_out_15_8 <= spi_wdata[7:0];
-                end else if (spi_wdata[14:8] == 7'h02) begin
-                    en_reg_pwm_7_0 <= spi_wdata[7:0];
-                end else if (spi_wdata[14:8] == 7'h03) begin
-                    en_reg_pwm_15_8 <= spi_wdata[7:0];
-                end else if (spi_wdata[14:8] == 7'h04) begin
-                    pwm_duty_cycle <= spi_wdata[7:0];
-                end 
+                case(spi_wdata[14:8])
+                    7'h00: en_reg_out_7_0 <= spi_wdata[7:0];
+                    7'h01: en_reg_out_15_8 <= spi_wdata[7:0];
+                    7'h02: en_reg_pwm_7_0 <= spi_wdata[7:0];
+                    7'h03: en_reg_pwm_15_8 <= spi_wdata[7:0];
+                    7'h04: pwm_duty_cycle <= spi_wdata[7:0];
+                    default: ;
+                endcase 
             end 
             transaction_processed <= 1'b1;
         end else if (!transaction_ready && transaction_processed) begin

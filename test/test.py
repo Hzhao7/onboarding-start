@@ -247,14 +247,16 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x02, 0xFF)
     await send_spi_transaction(dut, 1, 0x04, 0x00)
     # wait one tick
-    await ClockCycles(dut.clk, 4000)
-    assert dut.uo_out.value == 0x00, f"PWM 0% Duty Cycle failed: Expected 0x00, got {dut.uo_out.value}"
+    for _ in range(10000):
+        await RisingEdge(dut.clk)
+        assert dut.uo_out.value == 0x00, f"PWM 0% Duty Cycle failed: Expected 0x00, got {dut.uo_out.value}"
 
     # sets PWM on uo_out to 100% duty cycle
     await send_spi_transaction(dut, 1, 0x00, 0xFF)
     await send_spi_transaction(dut, 1, 0x02, 0xFF)
     await send_spi_transaction(dut, 1, 0x04, 0xFF)
     # wait one tick
-    await ClockCycles(dut.clk, 4000)
-    assert dut.uo_out.value == 0xFF, f"PWM 100% Duty Cycle failed: Expected 0xFF, got {dut.uo_out.value}"
+    for _ in range(10000):
+        await RisingEdge(dut.clk)
+        assert dut.uo_out.value == 0xFF, f"PWM 100% Duty Cycle failed: Expected 0xFF, got {dut.uo_out.value}"
     dut._log.info("PWM Duty Cycle test completed successfully")
