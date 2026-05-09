@@ -4,6 +4,7 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
+from cocotb.triggers import FallingEdge
 from cocotb.triggers import ClockCycles
 from cocotb.types import Logic
 from cocotb.types import LogicArray
@@ -151,11 +152,86 @@ async def test_spi(dut):
 
 @cocotb.test()
 async def test_pwm_freq(dut):
-    # Write your test here
+    clock = Clock(dut.clk, 100, units="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    # sets PWM on uo_out to 50% duty cycle
+    await send_spi_transaction(dut, 1, 0x00, 0xFF)
+    await send_spi_transaction(dut, 1, 0x02, 0xFF)
+    await send_spi_transaction(dut, 1, 0x04, 0x80)
+   
+    with cocotb.timeout(1, units="ms"):
+        await RisingEdge(dut.uo_out)
+        time_a = cocotb.utils.get_sim_time(units="s")
+        await RisingEdge(dut.uo_out)
+        time_b = cocotb.utils.get_sim_time(units="s")
+        period = time_b - time_a
+    freq = 1/period
+    dut._log.info(f"Measured frequency: {freq} Hz")
+    assert (freq >= 2970 and freq <= 3030), f"Expected frequency in range [2970, 3030] Hz, got {freq} Hz"
     dut._log.info("PWM Frequency test completed successfully")
 
 
 @cocotb.test()
 async def test_pwm_duty(dut):
-    # Write your test here
+    clock = Clock(dut.clk, 100, units="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    # sets PWM on uo_out to 50% duty cycle
+    await send_spi_transaction(dut, 1, 0x00, 0xFF)
+    await send_spi_transaction(dut, 1, 0x02, 0xFF)
+    await send_spi_transaction(dut, 1, 0x04, 0x80)
+
+    with cocotb.timeout(1, units="ms"):
+        await RisingEdge(dut.uo_out)
+        time_a = cocotb.utils.get_sim_time(units="s")
+        await FallingEdge(dut.uo_out)
+        time_b = cocotb.utils.get_sim_time(units="s")
+        await RisingEdge(dut.uo_out)
+        time_c = cocotb.utils.get_sim_time(units="s")
+        period = time_c - time_a
+        high_period = time_b - time_a
+        duty_cycle = high_period / period
+        dut._log.info(f"Measured duty cycle: {duty_cycle}")
+        assert (duty_cycle >= 0.49 and duty_cycle <= 0.51), f"Expected duty cycle in range [0.49, 0.51], got {duty_cycle}"
+    
+    # sets PWM on uo_out to 0% duty cycle
+    await send_spi_transaction(dut, 1, 0x00, 0xFF)
+    await send_spi_transaction(dut, 1, 0x02, 0xFF)
+    await send_spi_transaction(dut, 1, 0x04, 0x00)
+    # wait one tick
+    await ClockCycles(dut.clk, 4000)
+    assert dut.uo_out.value == 0x00, f"PWM 0% Duty Cycle failed: Expected 0x00, got {dut.uo_out.value}"
+
+    # sets PWM on uo_out to 100% duty cycle
+    await send_spi_transaction(dut, 1, 0x00, 0xFF)
+    await send_spi_transaction(dut, 1, 0x02, 0xFF)
+    await send_spi_transaction(dut, 1, 0x04, 0xFF)
+    # wait one tick
+    await ClockCycles(dut.clk, 4000)
+    assert dut.uo_out.value == 0xFF, f"PWM 100% Duty Cycle failed: Expected 0xFF, got {dut.uo_out.value}"
     dut._log.info("PWM Duty Cycle test completed successfully")
