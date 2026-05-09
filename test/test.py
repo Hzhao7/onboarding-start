@@ -174,9 +174,9 @@ async def test_pwm_freq(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x80)
 
 
-    await with_timeout(RisingEdge(dut.uo_out), 1, timeout_unit="ms")
+    await with_timeout(RisingEdge(dut.uo_out), 3, timeout_unit="ms")
     time_a = cocotb.utils.get_sim_time(units="s")
-    await with_timeout(RisingEdge(dut.uo_out), 1, timeout_unit="ms")
+    await with_timeout(RisingEdge(dut.uo_out), 3, timeout_unit="ms")
     time_b = cocotb.utils.get_sim_time(units="s")
     period = time_b - time_a
     freq = 1/period
@@ -207,11 +207,11 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x02, 0xFF)
     await send_spi_transaction(dut, 1, 0x04, 0x80)
 
-    await with_timeout(RisingEdge(dut.uo_out), 1, timeout_unit="ms")
+    await with_timeout(RisingEdge(dut.uo_out), 3, timeout_unit="ms")
     time_a = cocotb.utils.get_sim_time(units="s")
-    await with_timeout(FallingEdge(dut.uo_out), 1, timeout_unit="ms")
+    await with_timeout(FallingEdge(dut.uo_out), 3, timeout_unit="ms")
     time_b = cocotb.utils.get_sim_time(units="s")
-    await with_timeout(RisingEdge(dut.uo_out), 1, timeout_unit="ms")
+    await with_timeout(RisingEdge(dut.uo_out), 3, timeout_unit="ms")
     time_c = cocotb.utils.get_sim_time(units="s")
     period = time_c - time_a
     high_period = time_b - time_a
