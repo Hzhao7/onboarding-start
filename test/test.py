@@ -8,6 +8,7 @@ from cocotb.triggers import FallingEdge
 from cocotb.triggers import ClockCycles
 from cocotb.types import Logic
 from cocotb.types import LogicArray
+from cocotb.triggers import with_timeout
 
 async def await_half_sclk(dut):
     """Wait for the SCLK signal to go high or low."""
@@ -171,13 +172,13 @@ async def test_pwm_freq(dut):
     await send_spi_transaction(dut, 1, 0x00, 0xFF)
     await send_spi_transaction(dut, 1, 0x02, 0xFF)
     await send_spi_transaction(dut, 1, 0x04, 0x80)
-   
-    with cocotb.timeout(1, units="ms"):
-        await RisingEdge(dut.uo_out)
-        time_a = cocotb.utils.get_sim_time(units="s")
-        await RisingEdge(dut.uo_out)
-        time_b = cocotb.utils.get_sim_time(units="s")
-        period = time_b - time_a
+
+
+    await with_timeout(RisingEdge(dut.uo_out), 1, timeout_unit="ms")
+    time_a = cocotb.utils.get_sim_time(units="s")
+    await with_timeout(RisingEdge(dut.uo_out), 1, timeout_unit="ms")
+    time_b = cocotb.utils.get_sim_time(units="s")
+    period = time_b - time_a
     freq = 1/period
     dut._log.info(f"Measured frequency: {freq} Hz")
     assert (freq >= 2970 and freq <= 3030), f"Expected frequency in range [2970, 3030] Hz, got {freq} Hz"
@@ -206,18 +207,17 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x02, 0xFF)
     await send_spi_transaction(dut, 1, 0x04, 0x80)
 
-    with cocotb.timeout(1, units="ms"):
-        await RisingEdge(dut.uo_out)
-        time_a = cocotb.utils.get_sim_time(units="s")
-        await FallingEdge(dut.uo_out)
-        time_b = cocotb.utils.get_sim_time(units="s")
-        await RisingEdge(dut.uo_out)
-        time_c = cocotb.utils.get_sim_time(units="s")
-        period = time_c - time_a
-        high_period = time_b - time_a
-        duty_cycle = high_period / period
-        dut._log.info(f"Measured duty cycle: {duty_cycle}")
-        assert (duty_cycle >= 0.49 and duty_cycle <= 0.51), f"Expected duty cycle in range [0.49, 0.51], got {duty_cycle}"
+    await with_timeout(RisingEdge(dut.uo_out), 1, timeout_unit="ms")
+    time_a = cocotb.utils.get_sim_time(units="s")
+    await with_timeout(FallingEdge(dut.uo_out), 1, timeout_unit="ms")
+    time_b = cocotb.utils.get_sim_time(units="s")
+    await with_timeout(RisingEdge(dut.uo_out), 1, timeout_unit="ms")
+    time_c = cocotb.utils.get_sim_time(units="s")
+    period = time_c - time_a
+    high_period = time_b - time_a
+    duty_cycle = high_period / period
+    dut._log.info(f"Measured duty cycle: {duty_cycle}")
+    assert (duty_cycle >= 0.49 and duty_cycle <= 0.51), f"Expected duty cycle in range [0.49, 0.51], got {duty_cycle}"
     
     # sets PWM on uo_out to 0% duty cycle
     await send_spi_transaction(dut, 1, 0x00, 0xFF)

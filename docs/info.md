@@ -30,7 +30,11 @@ The configuration registers are as follows:
 
 ## How to test
 
-Placeholder
+Send SPI transactions to configure the output enable, PWM enable, and duty cycle registers. 
+Verify that uo_out and uio_out respond correctly to register writes. 
+
+The provided SPI test verifies valid/invalid address handling, write operations, and output assertions.
+The PWM tests verify frequency accuracy (~3 kHz ±1%) and duty cycle accuracy (0%, 50%, 100% ±1%).
 
 ## External hardware
 
